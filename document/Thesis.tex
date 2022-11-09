@@ -6,7 +6,7 @@
 \usepackage{amsbsy}
 \usepackage{caption,booktabs}
 \captionsetup{ justification = centering }
-%\usepackage{mathpazo}
+\usepackage{mathpazo}
 \usepackage{float}
 \setlength{\marginparwidth}{2cm}
 \usepackage{todonotes}
@@ -16,13 +16,18 @@
 \usepackage{graphicx}
 \usepackage[utf8]{inputenc}
 \usepackage[nodayofweek]{datetime}
+\usepackage{hhline}
+
 \floatstyle{plaintop}
 \restylefloat{table}
+
 \addbibresource{Bibliography.bib}
+
 % \setlength{\parskip}{\baselineskip}%
 \renewcommand{\tablename}{Tabla}
 \renewcommand{\listalgorithmcfname}{Índice de Algoritmos}
 %\dontprintsemicolon
+
 \SetAlgoNoEnd
 
 \definecolor{codegreen}{rgb}{0,0.6,0}
@@ -93,6 +98,7 @@
 
 \include{MainMatter/Introduction}
 \include{MainMatter/Background}
+\include{MainMatter/Theoric}
 \include{MainMatter/Proposal}
 \include{MainMatter/Implementation}
 

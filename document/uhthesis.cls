@@ -23,11 +23,11 @@
 \RequirePackage{csquotes}
 \RequirePackage[
 	style=apa,
-  backend=biber,
 	citestyle=numeric,
-  hyperref=true,
+	backend=biber,
+  	hyperref=true,
 	backref=true
-	]{biblatex}
+]{biblatex}
 
 \RequirePackage[linktocpage,breaklinks,colorlinks,%
                 linkcolor=black,anchorcolor=black,citecolor=black,%
@@ -131,19 +131,19 @@
   {\usebibmacro{textcite:postnote}}
 
 % % Backreferences in the bibliography.
-% \backrefspanish
+%\backrefspanish
 % \renewcommand{\backref}[1]{}
 % \renewcommand{\backrefalt}[4]{%
 %   \ifcase #1 \relax%
 %   \or (Citado en la página~#2).%
 %   \else (Citado en las páginas~#2).%
 %   \fi%
-% }
-% \btxifchangecaseoff
-% \renewcommand{\btxselectlanguage}[1]{\relax}
+%}
+%\btxifchangecaseoff
+%\renewcommand{\btxselectlanguage}[1]{\relax}
 
 % % Book edition numbers.
-% \declarebtxcommands{spanish}{%
+%\declarebtxcommands{spanish}{%
 %   \def\btxnumeralshort#1{#1.^a}%
 %   \def\btxnumerallong#1{%
 %     \ifnumber{#1}{%
@@ -155,7 +155,7 @@
 %     }%
 %     {#1}%
 %   }%
-% }
+%}
 
 \renewcommand{\nomname}{Glosario}
 \newcommand{\advisor}[1]{\def\@advisor{#1}}
@@ -203,7 +203,7 @@
 \newtheorem{theorem}{Teorema}[chapter]
 \newtheorem{definition}{Definición}[chapter]
 \newtheorem{lemma}{Lema}[chapter]
-
+\newtheorem{property}{Propiedad}[chapter]
 
 \AtBeginDocument{%
   % \hypersetup{pdftitle=\@title,pdfauthor=\@author}%
@@ -247,4 +247,18 @@
   \pagestyle{plain}
 }
 
+
+\DeclareCiteCommand{\brackcite}[\mkbibbrackets]
+{\usebibmacro{prenote}}
+{\usebibmacro{citeindex}%
+	\printtext[bibhyperref]{\usebibmacro{cite}}}
+{\multicitedelim}
+{\usebibmacro{postnote}}
+
+\DeclareCiteCommand*{\brackcite}[\mkbibbrackets]
+{\usebibmacro{prenote}}
+{\usebibmacro{citeindex}%
+	\printtext[bibhyperref]{\usebibmacro{citeyear}}}
+{\multicitedelim}
+{\usebibmacro{postnote}}
 % Created by Yasser González-Fernández <ygonzalezfernandez@gmail.com>
