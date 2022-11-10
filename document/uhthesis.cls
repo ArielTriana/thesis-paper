@@ -29,6 +29,8 @@
 	backref=true
 ]{biblatex}
 
+\DeclareUnicodeCharacter{0301}{\'{e}}
+
 \RequirePackage[linktocpage,breaklinks,colorlinks,%
                 linkcolor=black,anchorcolor=black,citecolor=black,%
                 filecolor=black,menucolor=black,runcolor=black,%

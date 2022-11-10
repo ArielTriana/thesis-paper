@@ -38,7 +38,7 @@ Las cámaras son herramientas esenciales en el campo de visión computacional. L
 
 La salida de las cámaras de profundiad pueden ser visualizadas de diversas formas: en la Figura \ref{fig:rgbd} la imagen de color se muestra al lado de la imagen de profundidad, donde cada color diferente en el mapa de profundidad representa una distancia de la cámara.
 
-\begin{figure}[h]
+\begin{figure}[ht]
 	\centering
 	\includegraphics[width=10cm]{./Graphics/rgbd.png}
 	\caption{Imagen de color e imagen de profundidad. El color cyan en el mapa de profundidad corresponde a las distancias más cercanas. Tomado de \cite{intel}.}
@@ -85,7 +85,7 @@ El trabajo teórico con estos dispositivos requiere del diseño de modelos que r
 	\end{equation}
 \end{definition}
 
-\begin{figure}[h]
+\begin{figure}[ht]
 	\centering
 	\includegraphics[width=10cm]{./Graphics/modelo-proyeccion-general.png}
 	\caption{Modelo de cámara de proyección general. Sistema de coordendas de (a) Objeto o realidad (X, Y, Z), (b) Cámara (X', Y', Z') e (c) Imagen (u, v). Tomada de~\cite{ji2022vision}.}
@@ -133,7 +133,7 @@ De manera general, a partir de las imágenes de un objeto de calibración, se co
 	
 	En el caso del modelo de proyección general, la matriz de la cámara está representada por P como se describe en la ecuación \ref{eq:proyGeneral-1}. Dado que el objeto de calibración que se utiliza es plano (Figura \ref{fig:chess}) y todos los parámetros en $K$ son desconocidos, se necesita la captura de varias imágenes con diferente orientación. Las propiedades geométricas del objeto de calibración se conocen, por tanto, una vez obtenidas las imágenes se procede a detectar los puntos de control.
 	
-	\begin{figure}[h]
+	\begin{figure}[ht]
 		\centering
 		\includegraphics[width=10cm]{./Graphics/chess.png}
 		\caption{Calibración basada en objetos planos. Tomada de \cite{ching2022segm3d}}
@@ -187,7 +187,7 @@ De manera general, a partir de las imágenes de un objeto de calibración, se co
 	Finalmente, los parámetros obtenidos se refinan mediante optimización no lineal. La función de costo normalmente usada en la minimización, dadas $n$ imágenes y $m$ puntos del objeto planar, es:
 	
 	\begin{equation}
-		\sum_{i=1}^n\sum_{j=1}^m \|x_{ij} - \bar(K, R_i, t_i, X_j)\|^2
+		\sum_{i=1}^n\sum_{j=1}^m \|x_{ij} - \bar{x}(K, R_i, t_i, X_j)\|^2
 	\end{equation}
 
 	Donde $x_{ij}$ contiene las medidas de las coordenadas del punto de control $j$ en la imagen $i$ y $\bar{x}(K, R_i, t_i, X_j)$ es la proyección del punto de control $X_j$ en la imagen $i$. Este problema de mínimos cuadrados es resuelto con el algoritmo Levenberg-Marquardt~\cite{more1978levenberg}.
@@ -215,17 +215,56 @@ La ecualización del histograma es una de las técnicas que permiten el ajuste d
 
 \subsubsection{CLAHE}
 
-La ecualización de histograma produce buenos resultados en el mejoramiento de las imágenes, pero el ruido presente también será mejorado. El algoritmo de Ecualización Adaptativa del Histograma con Limitación de Contraste (CLAHE, por sus siglas en inglés) pretende aportar una solución al problema anterior.
+La ecualización de histograma produce buenos resultados en el mejoramiento de las imágenes. La ecualización adaptativa de histograma (AHE) calcula varios histogramas, cada uno correspondiente a una sección distinta de la imagen, y los utiliza para redistribuir los valores de luminosidad de la imagen.  Sin embargo, AHE tiende a amplificar demasiado el ruido en regiones relativamente homogéneas de una imagen. El algoritmo de Ecualización Adaptativa del Histograma con Limitación de Contraste (CLAHE, por sus siglas en inglés) pretende aportar una solución al problema anterior. 
 
-CITAR ART \cite{pizer1987adaptive}
+CLAHE es una variante de ecualización de histograma adaptativo en la que la amplificación de contraste es limitada. La amplificación del contraste en las proximidades de un valor de píxel dado viene dada por la pendiente de la función de transformación. Esto es proporcional a la pendiente de la función de distribución acumulativa de vecindad (CDF) y, por lo tanto, al valor del histograma en ese valor de píxel.  CLAHE limita la amplificación recortando el histograma a un valor predefinido antes de calcular el CDF. Esto limita la pendiente de la CDF y, por tanto, de la función de transformación. El valor al que se recorta el histograma, el llamado límite de recorte, depende de la normalización del histograma y, por tanto, del tamaño de la región de vecindad~\cite{pizer1987adaptive}. Los valores comunes limitan la amplificación resultante entre 3 y 4.
+ 
+Es ventajoso no descartar la parte del histograma que excede el límite de recorte, sino redistribuirlo por igual entre todos los contenedores de histogramas.
+
 
 \subsection{Filtros}
 
+Los filtros digitales constituyen uno de los principales modos de operar en el procesamiento de imágenes digitales. Pueden usarse para distintos fines como suavizar la imagen, eliminar ruido, realzar la imagen y detectar bordes, pero en todos los casos, el resultado sobre cada píxel depende de los píxeles de su entorno. Una imagen se puede filtrar en el dominio del espacio, trabajando directamente sobre los píxeles de la imagen, o en el dominio de la frecuencia, donde las operaciones se llevan a cabo en la transformada de Fourier de la imagen.
+
+Los filtros lineales en particular, son filtros basados en máscaras de convolución. Dada una imagen $I_{h \times w}$ y una máscara de convolución $M$~\footnote{Una máscara de convolución no es más que una matriz de coeficientes.} la imagen resultante $G_{h \times w}$ consiste en realizar la operación de convolución $W * I$.
+
+\begin{definition}
+	Dado el filtro $W[x, y]$ de tamaño $m \times n$ y la imagen $I_{h \times w}$, la convolución entre $W$ e $I$, denotada como $W * I$ está dada por la ecuacion:
+	
+	\begin{equation}
+		W * I = \sum_{s = -a}^a\sum_{t = -b}^b W[s,t] I[x - s, y - t]
+	\end{equation}
+
+	Con $a = \frac{m -1}{2}$ y $b = \frac{n -1}{2}$. Se asume por conveniencia de notación que $n, m \in \mathbb{Z}$ y $n, m$ son impares.
+\end{definition}
+
+
+
+\subsubsection{Filtro Gaussiano}
+
+El filtro gaussiano se usa para emborronar imágenes y eliminar ruido. Este filtro preserva los bordes a medida que suaviza la imagen eliminando el ruido. Este filtro se define como aquel filtro cuya respuesta al impulso es una función gaussiana o una aproximación a ellas.
+
+\begin{equation}
+	\frac{1}{2\pi\sigma^2} e^{-\frac{x^2 + y^2}{2\sigma^2}}
+\end{equation}
+
+\subsubsection{Filtro de Acentuado o \textit{Sharpening}}
+
+El filtro \textit{sharpening} se utiliza para acentuar y definir los bordes la imagen. La máscara de convolución empleada es la siguiente:
+
+\begin{equation}
+	M = \begin{pmatrix} 
+		0 & -1 & 0 \\
+		-1 & 5 & -1 \\ 
+		0 & -1 & 0
+	\end{pmatrix}
+\end{equation}
+
 \subsection{Morfología matemática}
 
-La palabra ``morfología'' se refiere a la forma y estructura de algún elemento. En el campo del procesamiento de imágenes se puede utilizar para referirse a la forma de una región. La morfología matemática es una metodología basada en la teoría de conjuntos y la topología, que intenta de una manera cuantitativa describir la estructura de objetos en una imagen~\cite{}.
+La palabra ``morfología'' se refiere a la forma y estructura de algún elemento. En el campo del procesamiento de imágenes se puede utilizar para referirse a la forma de una región. La morfología matemática es una metodología basada en la teoría de conjuntos y la topología, que intenta de una manera cuantitativa describir la estructura de objetos en una imagen~\cite{bovik2009essential}.
 
-Las operaciones morfológicas fueron originalmente definidas como operaciones sobre conjuntos y han demostrado ser útiles para procesar puntos en un espacio de dos dimensiones. Estas utilizan una estructura conocida como elemento estructurante~\cite{}~\cite{}.
+Las operaciones morfológicas fueron originalmente definidas como operaciones sobre conjuntos y han demostrado ser útiles para procesar puntos en un espacio de dos dimensiones. Estas utilizan una estructura conocida como elemento estructurante~\cite{soille1999morphological}~\cite{haralick1987image}.
 
 \begin{definition}
 	Se define una imagen binaria $B_{h \times w}$ como una imagen, tal que: $B_{h \times w}[i, j] = p_{i, j} \in \{0, 1\}$ y $0 \leq i \leq h - 1$, $ 0 \leq j \leq w-1$.
@@ -235,16 +274,16 @@ Las operaciones morfológicas fueron originalmente definidas como operaciones so
 	Se define un elemento estructurante $S$ como una imagen binaria $S_{a \times b}$ representando un tamaño y forma arbitrario.
 \end{definition}
 
-Los elementos estructurantes se utilizan para hacer un proceso similar a la convolución aplicando una operación lógica entre el elemento estructurante $S$ y cada píxel $p_{i, j} \in B_{h \times w}$. El resultado de esta operación se almacena en cada píxel. El efecto que se obtiene dependel del tamaño y la forma del elemento estructurante $S$~\cite{} (Figuras \ref{fig:estructurante} y \ref{fig:kernel}).
+Los elementos estructurantes se utilizan para hacer un proceso similar a la convolución aplicando una operación lógica entre el elemento estructurante $S$ y cada píxel $p_{i, j} \in B_{h \times w}$. El resultado de esta operación se almacena en cada píxel. El efecto que se obtiene dependel del tamaño y la forma del elemento estructurante $S$~\cite{castleman1996digital} (Figuras \ref{fig:estructurante} y \ref{fig:kernel}).
 
-\begin{figure}[h]
+\begin{figure}[ht]
 	\centering
 	\includegraphics[width=10cm]{./Graphics/estructurante.png}
 	\caption{Representación de una operación morfológica con un elemento estructurante}
 	\label{fig:estructurante}
 \end{figure}	
 
-\begin{figure}[h]
+\begin{figure}[ht]
 	\centering
 	\includegraphics[width=10cm]{./Graphics/kernel.png}
 	\caption{Elementos estructurales. (a) cruz, (b) línea, (c) rectángulo de 3$\times$3 y en (d) el disco de radio 2.}
@@ -274,7 +313,7 @@ Existen dos operaciones morfológicas básicas de las cuales se obtienen resulta
 \begin{itemize}
 	\item \textbf{Erosión}
 	
-	La erosión es el proceso de eliminar todos los puntos fronteras de una región, convirtiendo el objeto más pequño en un área por un píxel sobre todo su perímetro. La erosión es útil para remover objetos de una imagen segmentada que pueden ser muy pequeños para ser de interés~\cite{}. En general, se puede definir de la siguiente manera:
+	La erosión es el proceso de eliminar todos los puntos fronteras de una región, convirtiendo el objeto más pequño en un área por un píxel sobre todo su perímetro. La erosión es útil para remover objetos de una imagen segmentada que pueden ser muy pequeños para ser de interés~\cite{castleman1996digital}. En general, se puede definir de la siguiente manera:
 	
 	\begin{equation}
 		E = B \otimes S = \{x, y | S_{x, y} \subseteq B\}
@@ -282,7 +321,7 @@ Existen dos operaciones morfológicas básicas de las cuales se obtienen resulta
 
 	\item \textbf{Dilatación}
 	
-	La dilatación es el proceso de incorporar a una región todos los puntos fuera de la región que sean adyacentes a esta, dejándola más grande en área por esa cantidad de puntos. La dilatación se puede utilizar para rellenar huevos en regiones segmentadas~\cite{}. En general, se puede definir de la siguiente manera:
+	La dilatación es el proceso de incorporar a una región todos los puntos fuera de la región que sean adyacentes a esta, dejándola más grande en área por esa cantidad de puntos. La dilatación se puede utilizar para rellenar huevos en regiones segmentadas~\cite{castleman1996digital}. En general, se puede definir de la siguiente manera:
 	
 	\begin{equation}
 		D = B \otimes S = \{x, y | S_{x, y} \cap B \neq \emptyset\}
@@ -291,7 +330,7 @@ Existen dos operaciones morfológicas básicas de las cuales se obtienen resulta
 
 \subsubsection{Cerrado}
 
-Con estas operaciones combinadas se puede realizar la operación conocida como cerrado. Este proceso consiste en aplicar el operador básico dilatación y al resultado aplicarle el operador erosión. Tiene el efecto de llenar pequeños huecos en las regiones, conectar objetos cercanos y generalmente suavizar la frontera de un objeto sin cambio significativo en su área~\cite{}. Se define el proceso de la siguiente manera:
+Con estas operaciones combinadas se puede realizar la operación conocida como cerrado. Este proceso consiste en aplicar el operador básico dilatación y al resultado aplicarle el operador erosión. Tiene el efecto de llenar pequeños huecos en las regiones, conectar objetos cercanos y generalmente suavizar la frontera de un objeto sin cambio significativo en su área~\cite{castleman1996digital}. Se define el proceso de la siguiente manera:
 
 \begin{equation}
 	B \bullet S = (B \otimes S) \otimes S
@@ -311,6 +350,7 @@ El filtro se entrena a partir de instancias traducidas del parche objetivo. Al p
 
 La principal ventaja del los algoritmos de filtros de correlación es la eficiencia computacional. La razón es que el cálculo se puede realizar en el dominio de Fourier de forma eficiente~\cite{henriques2014high}. 
 
+Este algoritmo utiliza mapas de confiabilidad espacial para ajustar el soporte del filtro a la parte de la región seleccionada del cuadro para el seguimiento, lo que brinda la capacidad de aumentar el área de búsqueda y rastrear objetos no rectangulares. Los índices de confiabilidad reflejan la calidad de los filtros estudiados por canal y se utilizan como pesos para la localización. Por lo tanto, usando el Histograma de Gradientes Orientados (HoG por sus siglas en inglés) y los canales de color RGB como conjuntos de características, el algoritmo funciona relativamente bien.
 
 
 \section{Segmentación de imágenes}\label{section:seg}
@@ -342,7 +382,7 @@ Existen diferentes técnicas de segmentación que subcategorizan estos dos tipos
 
 La segmentación semántica, es también conocida como clasificación a nivel píxeles. Consiste en agrupar partes de una imagen que correspondan a una misma clase~\cite{thoma2016survey} con el objetivo de entender qué existe en una imagen a nivel de píxeles (Figura \ref{fig:semseg}).
 
-\begin{figure}[h!]
+\begin{figure}[ht]
 	\centering
 	\includegraphics[width=6.5cm]{./Graphics/semseg.png}
 	\caption{Resultado de una segmentación basada en píxeles. Cada color en la predicción representa una clase distinta.}
@@ -352,6 +392,69 @@ La segmentación semántica, es también conocida como clasificación a nivel p�
 \begin{property}
 	Luego de la clasificación a nivel de píxeles sobre una imagen $I_{h \times w}$ a cada píxel $p_{i, j} \in I_{h \times w}$ le corresponde una única clase $w_k \in W: k \in \mathbb{N}^+$ y $W$ es un conjunto finito de clases predefinidas.
 \end{property}
+
+\subsection{Segmentación con redes neuronales}
+
+Según \cite{pham2000survey}, los métodos de segmentación pueden dividirse en 8 categorías: (1) métodos de aplicación de umbral, (2) de crecimiento de regiones, (3) de clasificación, (4) de agrupamiento, (5) acercamientos por modelos de campos aleatorios de Markov, (6) por modelos deformables, (7) por guía de atlas y (8) por redes neuronales artificiales.
+
+Las Redes Neuronales Artificiales (RNA) representan un paradigma en el Aprendizaje de Máquinas y pueden usarse para la segmentación de imágenes de una gran variedad de formas. Están inspiradas en el funcionamiento humano.
+
+Estructuralmente, una RNA es modelada utilizando capas formadas por neuronas artificiales (unidades computacionales). Las unidades entre capas están conectadas por enlaces. Un enlace de la unidad $i$ a la $j$ sirve para propagar la activación $a_i$. Además, cada conexión tiene asociado un peso $w_{ij}$ que determina la fortaleza de dicho enlace. Cada neurona $j$ calcula una suma ponderada de sus entradas de la forma $in_j = \sum_{i = 0}^{n} w_{ij}a_i$ y luego aplica una función de activación $g$ sobre $in_j$, para obtener su salida $a_j = g(in_j)$. En un modelo simple la primera capa es la llamada entrada, las intermedias se conocen como capas ocultas y por último tenemos la capa de salida. En la Figura \ref{fig:rna} se muestra la estructura básica de una Red Neuronal Artificial simple.
+
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=10cm]{./Graphics/rna.png}
+	\caption{Ejemplo de una arquitectura de RNA con dos capas ocultas.}
+	\label{fig:rna}
+\end{figure}
+
+Existe un tipo de RNA conocido como Redes Neuronales Convolucionales (RNC), comúnmente aplicado al análisis de imágenes digitales. Su nombre indica el empleo de la convolución.
+
+En los últimos años, este tipo de arquitectura de RNA, ha tomado auge dentro de la tarea de segmentación. Las próximas secciones presentan dos Redes Neuronales Convolucionales orientadas a la segmentación de imágenes médicas.
+
+\subsubsection{UNet}
+
+UNet es una arquitectura de RNC orientada a la segmentación. Esta red cuenta con la capacidad de localizar, es decir, a cada píxel le asigna una etiqueta con su clase. Su mayor ventaja es que a diferencia de otras arquitecturas requiere de pocas muestras anotadas para lograr su propósito; pues su estructura y estrategia de entrenamiento, que recae en el aumento de los datos, hacen un uso eficiente de las imágenes. Este último rasgo es muy beneficioso en el procesamiento de imágenes médicas, donde adquirir grandes volúmenes de información es una tarea usualmente compleja.
+
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=10cm]{./Graphics/unet.png}
+	\caption{Arquitectura UNet (ejemplo de 32 $\times$ 32 píxeles en su menor resolución). Cada rectángulo azul corresponde a un mapa de características multicanal. El número de canales se denota en el tope del rectángulo y los tamaños $x-y$ en la esquina inferior derecha. Los rectángulos blancos representan copias de los mapas de características. Las flechas muestras las diferentes operaciones. Tomada de~\cite{ronneberger2015u}.}
+	\label{fig:unet}
+\end{figure}
+
+La arquitectura, reflejada en la Figura \ref{fig:unet}, consta de un camino de contracción (lado izquierdo) para la captura del contexto y otro camino simétrico de expansión (lado derecho) que habilita la localización precisa.
+
+El camino de contracción está formado por la aplicación de repetidas capas convolucionales de 3 $\times$ 3, cada una seguida por una capa ReLU (Unidad Lineal Rectificada) y una capa Max-Pooling (Operación de Agrupamiento Máximo) de 2 $\times$ 2 para la reducción de resolución de muestreo (\textit{downsampling}). Cada paso en el camino expansivo contiene una apliación de la resolución (\textit{upsampling}) del mapa de características, una concatenación con su correspondiente mapa de características recortado del primer camino y dos convoluciones de 3 $\times$ 3, seguidas de capas ReLU. La última capa usa una convolución 1 $\times$ 1 para obtener la clasificación final de cada píxel dependiendo del número de clases. En total, UNet cuenta con 23 capas convolucionales~\cite{ronneberger2015u}.
+
+\subsubsection{LinkNet}
+
+LinkNet es una arquitectura de Red Neuronal Convolucional utilizada en la segmentación semántica, que predice de forma precisa sin sacrificar el tiempo de procesamiento de la red. Esta arquitectura transfiere información espacial directamente desde el camino de contracción hacia el de expansión en los pasos correspondiente, de esta forma mejora la precisión~\cite{chaurasia2017linknet}.
+
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=7cm]{./Graphics/linknet.png}
+	\caption{Arquitectura LinkNet. Tomada de ~\cite{chaurasia2017linknet}.}
+	\label{fig:linknet}
+\end{figure}
+
+La arquitectura de LinkNet se presenta en la Figura \ref{fig:linknet}. En la figura, \verb|conv| significa convolución y \verb|full-conv| significa convolución completa. Además, \verb|/2| denota reducción de muestreo por un factor de 2 que se logra al realizar una convolución estriada, y \verb|*2| significa aumento de muestreo por un factor de 2. Se utiliza la normalización por lotes (\textit{batch normalization}) entre cada capa convolucional y que es seguida por la no linealidad de ReLU. La mitad izquierda de la red que se muestra en la Figura \ref{fig:linknet} es el camino de contracción, mientras que la derecha es el camino de expansión.
+
+\begin{figure}[ht]
+	\centering
+	\begin{subfigure}
+		\centering
+		\includegraphics[width=.4\linewidth]{./Graphics/encoder.png}
+	\end{subfigure}
+	\begin{subfigure}
+		\centering
+		\includegraphics[width=.4\linewidth]{./Graphics/decoder.png}
+	\end{subfigure}
+	\caption{\textit{Encoder block} (izquierda) y \textit{decoder blocks} (derecha). Tomada de~\cite{chaurasia2017linknet}.}
+	\label{fig:blocks}
+\end{figure}
+
+El camino de contracción comienza con un bloque inicial que realiza la convolución en la imagen de entrada con un \textit{kernel} de tamaño 7 $\times$ 7 y un paso de 2. Este bloque también realiza una agrupación máxima espacial (\textit{spatial max-pooling}) en un área de 3 $\times$ 3 con un paso de 2. La última parte del camino de contracción consta de bloques residuales y se representan como \textit{encoder blocks}. Las capas dentro de estos \textit{encoder blocks} se muestran en detalle en la Figura \ref{fig:blocks}(izquierda). De igual forma, los detalles de los \textit{decoder blocks} se presentan en la Figura \ref{fig:blocks}(derecha). La principal diferencia entre esta arquitectura con otras es el traspaso de información de los \textit{encoder blocks} hacia los \textit{decoder blocks}, de forma que esta información no tiene que ser aprendida.
 
 \subsection{Evaluación de la segmentación}
 
@@ -365,8 +468,8 @@ La segmentación semántica particiona los píxeles en clases, por tanto se pued
 
 En el caso de la clasificación binaria la matriz de confusión queda como sigue:
 
-\begin{table}[h]
-	
+\begin{table}[ht]
+	\centering
 	\begin{tabular}{|| c || c | c ||}
 		\hhline{|=||=|=|}
 		
@@ -418,6 +521,8 @@ A continuación se presentan dos de las medidas más utilizadas para evaluar la 
 	\end{equation}
 \end{itemize}
 
+
+
 \section{Reconstrucción 3D a través de Cámaras de profundidad  (RGB-D)}\label{section:rec3d}
 
 La \textit{Reconstrucción 3D} es el proceso de generar un modelo computacional de tres dimensiones en forma de malla poligonal que refleja la apariencia y forma de una escena real con datos capturados por sensores. Una de las fuentes adquisitivas de estos datos son los sensores RGB-D integrados a las cámaras de profundidad.
@@ -433,7 +538,7 @@ En el ámbito de la reconstrucción 3D se han diseñado numerosos e innovadores 
 
 Es importante tener en cuenta estos aspectos para seleccionar el algoritmo que mejor se adecúe a la situación y condiciones ambientales del problema en cuestión. En la Figura \ref{fig:r3d} se muestra el flujo de procesamiento típico de un sistema de reconstrucción RGB-D para este tipo de escenarios.
 
-\begin{figure}[h]
+\begin{figure}[ht]
 	\centering
 	\includegraphics[width=10cm]{./Graphics/r3d.png}
 	\caption{Muestra del flujo típico de un sistema de reconstrucción RGB-D: primero, la imagen de entrada preprocesada se alinea respecto a la superfice de reconstrucción actual; segundo, dada la estimación de la posición de la cámara, la entrada es integrada/fusionada en el actual modelo 3D de la reconstrucción~\cite{zollhofer2018state}.}
@@ -478,7 +583,7 @@ El flujo de trabajo descrito en esta subsección es un sistema de reconstrucció
 	Para lograr un refinamiento de las alineaciones se aplica el algoritmo ICP sobre los pares detectados en registro geométrico; se crea un nuevo grafo de posiciones con los registros refinados; y se ejecuta la optimización en dichas posiciones como previamente mencionado en 1. El último paso del sistema es la integración de todas las imágenes RGB-D en un solo volumen TSDF y la extracción de la malla resultante.
 \end{enumerate}
 
-\begin{figure}[h]
+\begin{figure}[ht]
 	\centering
 	\includegraphics[width=10cm]{./Graphics/algo3d.png}
 	\caption{Ejemplo de resultados del algoritmo de reconstrucción. A la derecha se muestra el conjunto de fragmentos de la escena y a la izquierda la reconstrucción final formada a partir de los fragmentos. El ejemplo muestra la escena sin colores.}
@@ -486,9 +591,23 @@ El flujo de trabajo descrito en esta subsección es un sistema de reconstrucció
 
 \section{Estimadores de perímetro, área y volumen en mallas poligonales}\label{section:measure}
 
-El diseño de estimadores espaciales como son el perímetro, área y volumen en mallas poligonales constituye otra de las tareas trascendentales del trabajo. 
+El diseño de estimadores espaciales como son el perímetro, área y volumen en mallas poligonales constituye otra de las tareas trascendentales del trabajo. Antes de explicar el diseño de los estimadores se presentan algunos conceptos importantes en el diseño.
 
-DEFINICION DE CONVEX HULL
+\begin{definition}
+	Se define como Envoltura convexa de un conjunto de puntos $X$ de dimensión $n$ como la intersección de todos los conjuntos convexos que contienen a $X$. 
+\end{definition}
+
+La Envoltura convexa de un conjunto $X = \{x_1, x_2, \ldots, x_k\}$ está dada por la expresión:
+
+$$ C(X) = \bigg\{\sum_{i = 1}^{k} \alpha_i x_i | x_i \in X, \alpha_i \in \mathbb{R}, \alpha_i \geq 0, \sum_{i = 1}^{k} \alpha_i = 1\bigg\}$$
+
+La computación de la envoltura convexa de una nube finita de puntos, especialmente en el plano, ha sido exhaustivamente estudiada y tiene aplicaciones, como por ejemplo, en el procesado de imágenes y en localización. Existen muchos métodos para el cálculo de la envoltura convexa, en el trabajo se utiliza el algoritmo \textit{Quick Hull}~\cite{barber1996quickhull} implementado en \textit{Open3d}~\cite{zhou2018open3d}.
+
+\begin{definition}
+	La Triangulación de Delaunay para un conjunto $P$ de puntos de $n$ dimensiones es una triangulación $DT$ de $P$ tal que ningún punto en $P$ está dentro de la circun-hiperesfera de ningún $n$-simplex~\footnote{Un simplex es una generalización de la noción de triángulo o tetraedro a dimensiones arbitrarias.} en $DT$.
+\end{definition}
+
+La Triangulación de Delaunay para un conjunto de puntos $P$ no es única, en el caso de que la dimensión de los puntos de $P$ sea tres, la triangulación produce pirámides triangulares. El algoritmo utilizado en la implementación de \textit{Scipy}~\cite{virtanen2020scipy} es el algoritmo \textit{Quick Hull}~\cite{barber1996quickhull}.
 
 \subsection{Perímetro}
 
@@ -511,9 +630,7 @@ El perímetro de una malla poligonal que representa una úlcera se define como l
 
 \subsection{Área}
 
-MUELA DEL AREA
-
-La estimación del área de una malla poligonal se define como la sumatoria del área de todas las caras triangulares que conforman la malla. Para el cálculo del área de los triángulos se utiliza la fórmula de Herón. 
+El área de una figura geométrica hace referencia a la superficie de la misma, es decir, al espacio que queda encerrado en los límites de la misma. La estimación del área de una malla poligonal se define como la sumatoria del área de todas las caras triangulares que conforman la malla. Para el cálculo del área de los triángulos se utiliza la fórmula de Herón. 
 
 $$A = \sqrt{s(s-a)(s-b)(s-c)}$$
 
@@ -527,8 +644,20 @@ donde $A_k$ es el área de la cara $k$-ésima de la malla poligonal.
 
 \subsection{Volumen}
 
-MUELA DEL VOLUMEN
+El volumen es una magnitud métrica de tipo escalar definida como la extensión en tres dimensiones de una región del espacio. Las úlceras se pueden definir como cavidades en una superficie, por tanto el volumen de una úlcera no es más que el volumen de la cavidad.
 
-La estimación del volumen de una úlcera en este caso particular se concibe como un proceso de varias etapas. Las úlceras se pueden definir como cavidades en una superficie, por tanto el volumen de una úlcera no es más que el volumen de la cavidad. Luego es necesario aproximar la superficie que cubre la cavidad, esta superficie será llamada tapa $T_U$ de la úlcera con malla $U$. Luego, se forma la malla compuesta de $C = T_U + U$ y se calcula el volumen de esta malla, realizando una triangulación de Delaunay y sumando el volumen de las pirámides resultantes.
+La estimación del volumen de una úlcera en este caso particular se concibe como un proceso de varias etapas.  Como primer paso es necesario aproximar la superficie que cubre la cavidad, esta superficie será llamada tapa $T_U$ de la úlcera con malla $U$. Luego, se forma la malla compuesta de $C = T_U + U$ y se calcula el volumen de esta malla, realizando una triangulación de Delaunay y sumando el volumen de las pirámides resultantes. Por tanto el volumen de la malla $C$ es:
+
+\begin{equation}
+	V_C = \sum_{i = 0}^{k} V_{\pi_i}
+\end{equation}
+
+donde se cumple que: 
+
+\begin{itemize}
+	\item $C$ es la malla compuesta por $T_U$ y $U$.
+	\item $\Pi$ es el conjunto de pirámides resultantes de la triangulación de Delaunay de $C$. Luego, $\pi_i \in \Pi: 1 \leq i \leq k = |\Pi|$
+	\item $V_{\pi_i}$ es el volumen de la pirámide triangular $i$-ésima cuya fórmula es $V_{\pi_i} = \frac{1}{3}A_t * h$, con $A_t$ es el área de una de las caras de la pirámide denotada $t$ y $h$ es la altura de la pirámide calculada como la distancia desde el plano formado por $t$ hasta el vértice sobrante de $\pi_i$.
+\end{itemize}
 
 
