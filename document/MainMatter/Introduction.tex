@@ -19,7 +19,7 @@ Se han desarrollado dos acercamientos principales a la modelación y reconstrucc
 
 \section*{Objetivos}
 
-Nuestro objetivo es diseñar un sistema de bajo costo, práctico y que no sea invasivo para el paciente, que permita tomar mediciones de las úlceras utilizando las cámaras de profundidad Intel~\textregistered RealSense™ D435i y técnicas de reconstrucción 3D. El sistema debe medir perímetro y área (como indicadores de la cicatrización de la lesión), y volumen (como estimador de la granulación). Las mediciones deben ser estables en el tiempo. Esta tesis propone un sistema que automatiza la segmentación 2D, reconstrucción 3D y medición de las UPD a partir de imágenes RGB-D. Dicho proceso funciona de la siguiente forma: 
+Nuestro objetivo es diseñar un sistema de bajo costo, práctico y que no sea invasivo para el paciente, que permita tomar mediciones de las úlceras utilizando las cámaras de profundidad Intel~\textregistered RealSense~\texttrademark D435i y técnicas de reconstrucción 3D. El sistema debe medir perímetro y área (como indicadores de la cicatrización de la lesión), y volumen (como estimador de la granulación). Las mediciones deben ser estables en el tiempo. Esta tesis propone un sistema que automatiza la segmentación 2D, reconstrucción 3D y medición de las UPD a partir de imágenes RGB-D. Dicho proceso funciona de la siguiente forma: 
 
 \begin{enumerate}
 	\item Para la captura de la secuencia se utiliza una cámara RGB-D~\footnote{Una cámara RGB–D es una cámara que capta imágenes a colores (RGB - formato \textit{Red} (rojo), \textit{Green} (verde), \textit{Blue} (azul)) y tiene sensor de profundidad (D - \textit{depth} (profundidad)).}.
@@ -35,7 +35,7 @@ En consecuencia, el modelo 3D final consiste en una malla que representa de la f
 Para lograr el objetivo general se proponen objetivos específicos mencionados a continuación:
 
 \begin{enumerate}
-	\item Creación de un conjunto de muestras de UPD que contenga videos grabados con la cámara RGB-D para la validación de la segmentación, reconstrucción y medición de las lesiones.
+	\item Creación de un conjunto de muestras de UPD que contenga vídeos grabados con la cámara RGB-D para la validación de la segmentación, reconstrucción y medición de las lesiones.
 	\item Elaborar el sistema de segmentación, reconstrucción 3D y medición de la herida con del uso de la cámara RGB-D. Aplicar técnicas de pre/posprocesamiento para mejorar la calidad de los resultados.
 	\item Analizar el desempeño de los resultados obtenidos respecto a la segmentación manual del conjunto de datos.
 \end{enumerate}
