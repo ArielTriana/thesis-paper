@@ -1,3 +1,8 @@
 \begin{conclusions}
-    Conclusiones
+
+La creación de un sistema de bajo costo y no intrusivo para llevar a cabo mediciones en las UPDs es de vital importancia, pues permite brindar a los centros médicos una herramienta para el seguimiento de la evolución de los tratamientos aplicados a dicha enfermedad. En particular, esta investigación propone un sistema de reconstrucción, segmentación 3D y mediciones de perímetro, superficie y volúmen de UPDs a partir de la captura de una secuencia de imágenes RGB-D. Esto conforma el paso base para la realización de un software intuitivo que pueda ser manejado directamente por los especialistas de centros médicos cubanos.
+
+La implementación consiste en varias etapas. Primeramente el usuario selecciona una región de interés con forma rectangular para luego comenzar con la captura de la secuencia, aplicando filtros de pre/post-procesamiento a los mapas de color y profundidad respectivamente. A continuación se procede a segmentar el conjunto de imágenes de color, usando un ensemble entre las redes neuronales LinkNet y UNet, obteniendo las máscaras binarias. Se utiliza la secuencia de la captura para la creación de fragmentos y su registro global, para luego integrar la escena usando las imágenes segmentadas. Como resultado, se obtiene una malla de la cual solo tomamos la región con color. Por último se procede a tomar mediciones a la malla resultante.
+
+Como resultado final, se alcanzó un error absoluto de aproximadamente 10mm para el cálculo de perímetro, mientras que para el área y volumen se alcanzaron valores de $470mm^2$ y $3289mm^3$. Se observa como en medidas de mayor dimensión tienden a aumentar los errores, sin embargo, los resultados obtenidos lucen prometedores ante trabajos futuros. A continuación, se proponen un conjunto de recomendaciones y mejoras para posteriores investigaciones, esperando la satisfactoria continuidad de este proyecto.
 \end{conclusions}

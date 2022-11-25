@@ -1,3 +1,10 @@
 \begin{recomendations}
-    Recomendaciones
+	
+Uno de los principales problemas enfrentados durante esta investigación fue la segmentación de la región ulcerosa con un método automático, rápido  y que consuma bajos recursos de procesamiento, se desarrollaron varios enfoques que funcionaron pero a cambio de la velocidad de cómputo y la asistencia de los especialistas para reducir el ruido del ambiente. Por esto una de las recomendaciones para futuros trabajos es la investigación de métodos investigativos que cumplan las tres característica. El algoritmo ideal, sería aquel que permita segmentar en tiempo real la zona de la úlcera, para así poder utilizar algoritmos de reconstrucción en tiempo real.
+
+Por otro lado, se utilizó un algoritmo de reconstrucción 3D a posteriori, donde se fijaban los parámetros descritos en la Sección \ref{sec:resRec3d}. Se recomienda investigar algoritmos de selección automática de parámetros para obtener mejores resultados en la reconstrucción y para agilizar el tiempo de cómputo de este proceso.
+
+Posterior a la reconstrucción se desarrolló un proceso de medición de la región ulcerosa. En la medición del volumen se ejecuta el proceso de generación de tapas a la cavidad. Como se presentó en los resultados los enfoques adoptados no cumplen las restricciones para las úlceras convexas o no mantienen la tasa de error en un margen adecuado. Por esto se sugiere investigar otros enfoques en la generación de tapas a la cavidad, utilizando otros métodos de interpolación o técnicas de aprendizaje de máquinas o aprendizaje profundo.
+
+La implementación de todo el software se desarrolló en Python como lenguaje de programación. Este lenguaje es el más utilizado para la construcción de prototipos como es el caso, pero no para sistemas que sean utilizados en producción y se necesite rapidez. Por esta razón se recomienda implementar el sistema en un lenguaje como C++. Además, se recomienda desarrollar una interfaz visual amigable para los especialistas en angiología, así como añadir al sistema una base de datos que les permita almacenar los datos del paciente y tener un seguimiento del porciento de granulación y cicatrización de la úlcera de forma automatizada.
 \end{recomendations}

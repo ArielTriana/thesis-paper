@@ -59,7 +59,7 @@ Existe una gran variedad de métodos para calcular profundidad utilizando sensor
 	\item \textbf{Tiempo de vuelo y LiDAR} Toda la tecnología anteriormente descrita se apoya en información conocida para calcular profundidad. Los sensores LiDAR son un tipo de cámaras que utilizan luz láser para calcular profundidad. Emiten una luz sobre la escena y calculan cuanto demora a la luz en volver al sensor de la cámara. La confiabilidad de la medición de estas cámaras en distancias significativas depende del poder y longitud de onda de la luz.
 \end{itemize}
 
-\subsection{Matriz intrínseca de la cámara}
+\subsection{Matriz intrínseca de la cámara}\label{section:calibration}
 
 El trabajo teórico con estos dispositivos requiere del diseño de modelos que representen y simulen su comportamiento real. Por este motivo, la literatura abarca diversos esquemas de complejidad variable que describen los distintos tipos de cámaras existentes. Este proyecto se centra en una generalización del modelo de cámara estenopeica o \textit{pinhole camera} que elimina las restricciones sobre los parámetros, conocida como modelo de proyección general. 
 
@@ -123,80 +123,57 @@ Tanto los parámetro internos como los externos son adquiridos a partir de la ca
 	La calibración geométrica es el proceso de determinación de las propiedades geométricas de la cámara. Su propósito es descubrir la correspondencia entre rayos y puntos de la imagen~\cite{kannala2008geometric}.
 \end{definition}
 
-El método de calibración que se detalla a continuación, basado en técnicas convencionales para modelos de proyección general, fue extraído de \cite{zhang2000flexible}. A diferencia de otros procedimientos solo requiere de la cámara para observar un patrón plano desde diferentes orientaciones.
+El método de calibración que se detalla a continuación, es el usado en las cámaras Intel\textregistered~RealSense\texttrademark~de la serie D400 y detallado en~\cite{grunnet2021intel}, donde se describe un conjunto de componentes integrados en el \textit{Software Develpment Kit} (SDK 2.0) de Intel\textregistered~RealSense\texttrademark~llamado \textit{Self-Calibration} o Auto-Calibración. 
 
-\subsubsection{Método de calibración}
+\subsection{Método de calibración}
 
-De manera general, a partir de las imágenes de un objeto de calibración, se comienza con una solución analítica de los parámetros y luego se aplica una técnica de optimización no lineal basada en el criterio de máxima similitud.
+EL conjunto de componentes integrados conocido como Auto-Calibración se emplea con el objetivo de (1) restaurar el rendimiento de la profundidad y (2) mejorar la exactitud de un dispositivo Intel\textregistered~RealSense\texttrademark~Depth Camera D400 que pueda verse degradado con el tiempo. A diferencia de otros procedimientos, este no requiere movimiento ni reposicionamiento durante la calibración, y puede completarse en cuestión de segundos. El métrodo propuesto en~\cite{grunnet2021intel} es rápido y no sobrecarga la Unidad Central de Procesamiento (CPU).
 
-\begin{enumerate}
-	\item Captura de imágenes del objeto de calibración y detección de sus puntos de control.
-	
-	En el caso del modelo de proyección general, la matriz de la cámara está representada por $P$ como se describe en la ecuación \ref{eq:proyGeneral-1}. Dado que el objeto de calibración que se utiliza es plano (Figura \ref{fig:chess}) y todos los parámetros en $K$ son desconocidos, se necesita la captura de varias imágenes con diferente orientación. Las propiedades geométricas del objeto de calibración se conocen, por tanto, una vez obtenidas las imágenes, se procede a detectar los puntos de control.
-	
-	\begin{figure}[ht]
-		\centering
-		\includegraphics[width=10cm]{./Graphics/chess.png}
-		\caption{Calibración basada en objetos planos. Tomada de \cite{ching2022segm3d}}
-		\label{fig:chess}
-	\end{figure}
-	\item Estimación de los parámetros intrínsecos y extrínsecos.
-	
-	La correspondencia entre un plano de la escena y su imagen de perspectiva es una homografía plana~\footnote{Homografía plana, relación lineal entre las coordenadas de los puntos en un plano arbitrario de la escena y las coordenadas de esos puntos en la imagen.}. Sin pérdida de la generalidad se asume que el plano de calibración es $Z = 0$ y se denota la $i$-ésima columna de la matriz de rotación $R$ por $r^i$. De la ecuación \ref{eq:proyGeneral-3} se tiene:
-	
-	\begin{equation}
-		\begin{pmatrix}
-			x\\
-			y\\
-			1
-		\end{pmatrix} = K[r^1|r^2|r^3|t] \begin{pmatrix}
-			X\\
-			Y\\
-			0\\
-			1
-		\end{pmatrix}
-		= K[r^1|r^2|t]
-		\begin{pmatrix}
-			X\\
-			Y\\
-			1
-		\end{pmatrix}
-		= H\begin{pmatrix}
-			X\\
-			Y\\
-			1
-		\end{pmatrix}
-	\end{equation}
-	donde la matriz $3 \times 3$ de homografía es:
-	\begin{equation}\label{eq:homografia}
-		H = K[r^1|r^2|t]
-	\end{equation}
-	
-	Las homografías pueden ser estimadas de múltiples formas dada una imagen del objeto de calibración. En \cite{zhang2000flexible} se presenta una técnica basada en el criterio de máxima similitud, sin embargo, no se profundizará en su explicación. Expresando las columnas de $H$ como $h_i$, usando el hecho de que $r^1$ y $r^2$ son ortonormales y simplificando la notación de $(K^{-1})^T$ como $K^{-T}$ de la ecuación \ref{eq:homografia} se obtiene:
-	
-	\begin{equation}\label{eq:hom-1}
-		h_1^TK^{-T}K^{-1}h_2 = 0
-	\end{equation}
-	\begin{equation}\label{eq:hom-2}
-		h_1^TK^{-T}K^{-1}h_1 = h_2^TK^{-T}K^{-1}h_2
-	\end{equation}
-	
-	Por tanto cada homografía provee dos restricciones que pueden escribirse como ecuaciones lineales de los elementos de la matriz homogénea y simétrica $w = K^{-T}K^{-1}$. Por tanto, el sistema que deriva de las ecuaciones \ref{eq:hom-1} y \ref{eq:hom-2} tiene la forma $Av = 0$, donde el vector de incógnitas $v = (w_{11}, w_{12}, w_{13}, w_{22}, w_{23}, w_{33})^T$ consiste en los elementos de $w$. La matriz $A$ tiene $2N$ columnas donde $N$ es el número de imágenes capturadas. La cantidad de imágenes debe ser mayor o igual que 3. Cuando se resuelve $w$, se puede computar la matriz triangular superior $K$ por la factorización de Cholesky. Dados $K$ y $H$, los parámetros externos pueden ser recuperados de la ecuación \ref{eq:homografia}.
-	
-	\item Refinamiento de los parámetros.
-	
-	Finalmente, los parámetros obtenidos se refinan mediante optimización no lineal. La función de costo normalmente usada en la minimización, dadas $n$ imágenes y $m$ puntos del objeto planar, es:
-	
-	\begin{equation}
-		\sum_{i=1}^n\sum_{j=1}^m \|x_{ij} - \bar{x}(K, R_i, t_i, X_j)\|^2
-	\end{equation}
+A continuación se describen cada uno de los métodos de auto-calibración, se expresan sus beneficios, restricciones e instrucciones.
 
-	Donde $x_{ij}$ contiene las medidas de las coordenadas del punto de control $j$ en la imagen $i$ y $\bar{x}(K, R_i, t_i, X_j)$ es la proyección del punto de control $X_j$ en la imagen $i$. Este problema de mínimos cuadrados es resuelto con el algoritmo Levenberg-Marquardt~\cite{more1978levenberg}.
-\end{enumerate}
+\subsubsection{Restauración de la cámara minimizando el ruido en la profundidad}
 
-\section{Mejoramiento de imágenes. Pre/postprocesamiento}\label{section:imgEnh}
+El método que se explica restaura la cámara optimizando el rendimiento en la profundiad en términos de minimizar el ruido en la medición de profundidad con el sistema estéreo. Se enfoca en la habilidad de los dispositivos de observar un objeto y reportar la posición de estos con bajo nivel de ruido; en otras palabras, se refiere al mejoramiento de la precisión o el error relativo.
 
-Una de las principales tareas en el procesamiento de imágenes es el mejoramiento de estas con el fin ajustarlas digitalmente para su visualización o proveerlas como entrada a algortimos. Entre las técnicas de mejoramiento de imágenes se encuentra la eliminación de ruido, el mejoramiento de contraste, la aplicación de filtros y operadores morfológicos, y la manipulación del histograma.
+Para visualizar los niveles de ruido de la profundidad en las cámaras se recomienda apuntar hacia una pared plana. Las cámaras de la serie D400 bajan su rendimiento gradualmente mostrando cada vez más ruido en el mapa de profundidad, por esta razón, al apuntar hacia la pared se muestran cada vez más variaciones en la profundidad, se obtienen con más frecuencia valores 0 indicando profundidades inválidas (Figura \ref{fig:calibration}). Para cuantificar la precisión en la profundidad o el error relativo, las cámaras se apuntan a la pared plana u otro objetivo plano y se mide la profundidad en cada punto de la pequeña sección conocida como Campo de visión o FOV por sus siglas en inglés \textit{field-of-view}, que por lo general es el 10\% o 20\% de la región de interés cerca del centro. Como se asume que el objetivo es plano, entonces, el mapa de profundidad de la región de interés se ajusta a un plano, y el error cuadrático medio (RMS por sus siglas en inglés) se mide como la desviación estándar del plano.
+
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=10cm]{./Graphics/calibration.png}
+	\caption{Comparación de las nubes de puntos obtenidas de una cámara bien calibrada (izquierda) y una cámara descalibrada (derecha). Ambas apuntando hacia la pared plana.}
+	\label{fig:calibration}
+\end{figure}
+
+El rendimiento puede ser reportado en unidades absolutas como milímetros o centrímetros, pero la forma de comparar y reportar el rendimiento entre cámaras, rangos de profundidad, resoluciones, FOV y variaciones del proyector es utilizar una métrica normalizada llamada \textit{Subpixel RMS} ($\sigma_{RMS}$)~\cite{grunnet2021intel}:
+
+\begin{equation}
+	\sigma_{RMS}(px) = \frac{\phi(px) * \beta(m) * \epsilon_{DepthRMS}(mm)}{\delta(mm)^2}
+\end{equation}
+
+donde:
+
+\begin{itemize}
+	\item $\phi$ es la distancia focal del sensor de profundidad, se cumple que $\phi = \frac{Xres(px)}{2\tan(\frac{HFOV}{2})}$.
+	\item $\epsilon_{DepthRMS}$ es el ruido del plano ajustado.
+	\item $\beta$ es el \textit{baseline} o distancia entre los sensores de la cámara RGB.
+	\item $\delta$ es la distancia desde la cámara hacia la pared plana u objetivo plano.
+	\item \textit{HFOV} es el campo de visión horizontal de los sensores estéreo.
+	\item \textit{Xres} es la resolución horizontal del mapa de profundidad sobre la que se hace la medición de la profundidad, por ejemplo 1280 o 848 píxeles.
+\end{itemize} 
+
+Los parámetros \textit{HFOV}, $\beta$, $\phi$ y \textit{Xres} se obtienen de la matriz intrínseca de la cámara. 
+
+\subsubsection{Optimización de la exactitud de la medición de profundidad}
+
+El método que se describe a continuación para la optimización de la exactitud de la medición de profundidad hace referencia al mejoramiento de la medición de distancia hacia el valor más preciso posible.
+
+El algoritmo recibe como entrada la distancia exacta que debe medir en el plano perpendicular desde el sensor RGB izquierdo, esta distancia se denomina \textit{ground truth}. Es todo un desafío obtener un \textit{ground truth} de calidad. Se debe asegurar antes de ejecutar el algoritmo que el objetivo sea plano y perpendicular al eje óptico de la cámara, además, el mapa de profundidad debe ser bueno (esto es, haber ejecutado el método descrito anteriormente). La ejecución de este algoritmo es rápida con un tiempo de ejecución entre 30ms y 1 segundo. 
+
+Este método realiza pequeños ajustes a la matriz intrínseca de la cámara para producir mapa de profundidad que en promedio sean cercanos al \textit{ground truth}. 
+
+\section{Técnicas de pre/postprocesamiento en el mejoramiento de imágenes}\label{section:imgEnh}
+
+Una de las principales tareas en el procesamiento de imágenes es el mejoramiento de estas con el fin ajustarlas digitalmente para su visualización o proveerlas como entrada a algoritmos. Entre las técnicas de mejoramiento de imágenes se encuentra la eliminación de ruido, el mejoramiento de contraste, la aplicación de filtros y operadores morfológicos, y la manipulación del histograma.
 
 Para las explicaciones teóricas de la presente sección considere las imágenes en escala de grises. Todas las operaciones y explicaciones pueden ser extendidas a imágenes RGB aplicándolas en cada canal de color.
 
@@ -260,6 +237,60 @@ El filtro \textit{sharpening} se utiliza para acentuar y definir los bordes la i
 		0 & -1 & 0
 	\end{pmatrix}
 \end{equation}
+
+La máscara de convolución anterior se obtiene de aplicar el filtro de Laplace de detección de bordes y adicionarle la imagen original a la imagen resultante del filtrado laplaciano~\cite{sharpen}.
+
+\subsection{Filtros de imágenes de profundidad}
+
+Para obtener la mejor calidad en los mapas de profundidad en ocasiones es necesaria la aplicación de filtros. El SDK de Intel\textregistered~RealSense\texttrademark~incluye filtros de postprocesamiento para mejorar la calidad de los datos de profundidad y reducir los niveles de ruido. Todos los filtros se implementan en el núcleo de la biblioteca.
+
+Para la mayoría de los casos de uso no es necesaria una gran cantidad de puntos, esto también puede perjudicar el rendimiento a la hora de aplicar filtros más potentes. Por esta razón se considera primeramente realizar un filtro de Decimación, así se reduce la resolución espacial preservando la $z$-exactitud.
+
+\subsubsection{Filtro de decimación}
+
+En lugar de reducir el tamaño de la nube de puntos tomando un píxel por cada $n$, se realiza un submuestreo más inteligente. El filtro se ejecuta en tamaños de \textit{kernel} $2 \times 2$ a $8 \times 8$ píxeles. Para bloques de tamaño 2 y 3, se selecciona el valor de profundidad  de ``mediana sin ceros''. Para dimensiones de \textit{kernel} más grandes, de 4 a 8 píxeles, se utiliza el valor de la ``media sin ceros'' . Si bien esto afectará claramente la resolución $x-y$ del mapa de profundidad, se debe tener en cuenta que los algoritmos de visión estereoscópica involucran algunas operaciones de convolución, por lo que reducir la resolución $x-y$ después de la captura con un submuestreo modesto conducirá a un impacto bastante mínimo en la resolución $x-y$ de profundidad. Uno de los beneficios del submuestreo inteligente es que también hará un poco de relleno rudimentario y suavizará los datos . El ``sin ceros'' se refiere al hecho de que los valores en el mapa de profundidad que son cero deben ignorarse. Estos son ``agujeros'' en el mapa que representan datos de profundidad que no cumplieron con la métrica de confianza y en lugar de proporcionar un valor incorrecto, la cámara proporciona un valor de cero en ese punto.
+
+Una vez comprimido el mapa de profundidad, se pueden aplicar filtros espaciales y temporales
+
+\subsubsection{Filtro espacial con conservación de aristas}
+
+Su implementación se describe en~\cite{gastal2011domain}. Este tipo de filtros suaviza el ruido mientras intenta conservar las aristas. Considere el ejemplo de la Figura \ref{fig:space1}, las mediciones ideales serian las presentadas en la parte izquierda. Al aplicar varios filtros para suavizar, se puede notar que el ruido disminuye, pero también se suavizan las aristas como se muestra en la Figura \ref{fig:space2}.
+
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=10cm]{./Graphics/figura1.png}
+	\caption{Comparación de las mediciones de profundidad. (Izquierda) medición ideal, (Derecha) medición con ruido}
+	\label{fig:space1}
+\end{figure}
+
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=10cm]{./Graphics/figura2.png}
+	\caption{En la parte superior izquerda se realiza un filtro promedio, en la parte	superior derecha se aplica EMA unidireccional, en la parte inferior izquerda se aplica EMA bidireccional y en la parte inferior derecha el filtro propuesto.}
+	\label{fig:space2}
+\end{figure}
+
+Para este filtro, se escanea el mapa de profundidad en el eje $X$ y el eje $Y$ y viceversa, dos veces, mientras se calcula el Promedio Móvil Exponencial (EMA, por sus siglas en inglés) unidimensional usando un parámetro $\alpha$ que determina la cantidad de suavizado. La ecuación recursiva específica es:
+
+\begin{equation}
+	S_t = \left\{ \begin{array}{lcc}
+		Y_1 & &  t = 1\\
+		\\ \alpha Y_t + (1-\alpha)S_{t-1} &  &t > 1 \wedge \Delta=|S_t - S_{t-1} < \delta_{thresh}|\\
+		\\ Y_t & & t > 1 \wedge \Delta=|S_t - S_{t-1} > \delta_{thresh}|
+	\end{array}
+	\right.
+\end{equation}
+
+El coeficiente $\alpha$ representa el grado de disminución de la ponderación. $Y_t$ es el valor recién registrado (de disparidad o profundidad), y $S_{t-1}$ es el valor de la EMA en el tiempo $t$. También se agrega un parámetro de umbral denotado $\delta_{thresh}$. Si el valor de profundidad entre los píxeles vecinos excede el umbral de profundidad establecido por este parámetro $\delta_{thresh}$, entonces $\alpha$ se restablecerá temporalmente a 1 (sin filtrado). Básicamente, esto significa que si se observa un borde, el suavizado se desactiva temporalmente.
+
+
+\subsubsection{Filtro de relleno de agujeros}
+
+Para lidiar con los ``agujeros'' que pueden ocurrir debido a oclusión o falta de textura en la superficie se utiliza un método simple. El filtro obtiene los cuatro ``vecinos'' de píxeles inmediatos (arriba, abajo, izquierda, derecha) y selecciona uno de ellos de acuerdo con una regla predefinida.
+
+\subsubsection{Filtro temporal}
+
+Siempre que sea posible, es recomendado tener en cuenta los \textit{frames} anteriores para promediar los mapas de profundidad, sobre todo para escenas de naturaleza estática. Los cambios de luz, o movimientos inherentes al sensor, pueden introducir ruido en los mapas de profundidad. Para reducir este ruido se aplica el mismo filtro espacial descrito anteriormente, solo que ahora entre \textit{frames}. Al configurar $\alpha = 1$, habrá cero filtrado, pero acercar $\alpha$ a 0 aumentará el promedio y la suavidad. Por lo tanto, no es un simple ``promedio de 2, 3 o 4 frames'', sino que permite un suavizado mas refinado. Además, al igual que con el filtro espacial, es importante agregar un parámetro de umbral. De esta manera se trata de reducir el suavizado temporal cerca de los bordes y tampoco se incluyen agujeros ($z=0$) en el promedio.
 
 \subsection{Morfología matemática}
 
@@ -345,9 +376,9 @@ El Seguimiento de objetos visuales a corto plazo o \textit{Short-term visual obj
 
 El algoritmo utilizado para el seguimiento de la úlcera en la secuencia de vídeo es CSR-DCF por sus siglas en inglés \textit{Discriminative Correlation Filter with Channel and Spatial Reliability} propuesto en~\cite{lunevzivc2018discriminative}. La implementación utilizada es la propuesta por la biblioteca \textit{OpenCV}~\cite{bradski2000opencv}.
 
-\subsection{CSR-DCF}
+\subsection{CSR-DCF}\label{sec:csr}
 
-La idea básica tras los algoritmos de seguimiento basados en filtros de correlación es estimar el filtro a través del cual se produce una respuesta deseada a partir de una imagen de entrada´. La respuesta deseada típicamente es una forma gaussiana centrada en la ubicación del objeto a seguir.
+La idea básica tras los algoritmos de seguimiento basados en filtros de correlación es estimar el filtro a través del cual se produce una respuesta deseada a partir de una imagen de entrada. La respuesta deseada típicamente es una forma gaussiana centrada en la ubicación del objeto a seguir.
 
 El filtro se entrena a partir de instancias traducidas del parche objetivo. Al probar, se evalúa la respuesta del filtro y el máximo da la nueva posición del objeto. El filtro se entrena en tiempo real y se actualiza sucesivamente con cada cuadro para que el rastreador se adapte a cambios moderados del objeto.
 
@@ -459,7 +490,7 @@ La arquitectura de LinkNet se presenta en la Figura \ref{fig:linknet}. En la fig
 
 El camino de contracción comienza con un bloque inicial que realiza la convolución en la imagen de entrada con un \textit{kernel} de tamaño 7 $\times$ 7 y un paso de 2. Este bloque también realiza una agrupación máxima espacial (\textit{Spatial Max-Pooling}) en un área de 3 $\times$ 3 con un paso de 2. La última parte del camino de contracción consta de bloques residuales y se representan como \textit{encoder blocks}. Las capas dentro de estos \textit{encoder blocks} se muestran en detalle en la Figura \ref{fig:blocks}(izquierda). De igual forma, los detalles de los \textit{decoder blocks} se presentan en la Figura \ref{fig:blocks}(derecha). La principal diferencia entre esta arquitectura con otras es el traspaso de información de los \textit{encoder blocks} hacia los \textit{decoder blocks}, de forma que esta información no tiene que ser aprendida.
 
-\subsection{Evaluación de la segmentación}
+\subsection{Evaluación de la segmentación}\label{sec:evalSeg}
 
 Para conocer la calidad de los resultados de un proceso de segmentación, es necesario utilizar alguna medida de evaluación. Existen diferentes medidas para lograr este objetivo. A continuación se presentan los conceptos principales para la evaluación de la calidad de los algoritmos de segmentación.
 
@@ -480,6 +511,8 @@ En el caso de la clasificación binaria la matriz de confusión queda como sigue
 		0 & VN & FP\\
 		1 & FN & VP \\ \hhline{|=||=|=|}
 	\end{tabular}
+	\caption{Matriz de confusión}
+	\label{tab:conf}
 \end{table}
 
 \begin{itemize}
@@ -568,7 +601,7 @@ En la próxima subsección se profundiza en un Sistema de Reconstrucción 3D a p
 \end{definition}
 
 
-\subsection{Método de Reconstrucción 3D}
+\subsection{Método de Reconstrucción 3D}\label{section:rec3dmet}
 
 El flujo de trabajo descrito en esta subsección es un sistema de reconstrucción de escenas completas, basado en el artículo~\cite{choi2015robust} y adoptando ideas introducidas en~\cite{park2017colored} para lograr mejores resultados. Fue desarrollado por el equipo de la biblioteca \textit{Open3D}~\cite{zhou2018open3d}, haciendo uso de múltiples algoritmos implementados en la misma. Toma como entrada la secuencia $\hat{S}$ de imágenes RGB-D sincronizadas y alineadas, junto a la matriz intrínseca de la cámara, la cual forma parte de los parámetros entrantes de muchos algoritmos internos del sistema. Procede de la siguiente forma:
 
