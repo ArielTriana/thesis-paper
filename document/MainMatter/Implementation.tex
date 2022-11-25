@@ -130,6 +130,28 @@ En \textit{Open3D} se tienen dos procedimientos disponibles para el registro ICP
 
 Tanto el registro ICP como la variante vista anteriormente se conocen como métodos de registro local porque se basan en una alineación aproximada como inicialización. Existe otra clase de métodos de registro, conocida como registro global. Esta familia de algoritmos no requiere una alineación para la inicialización. Por lo general, producen resultados de alineación menos estrictos y se utilizan como inicialización de los métodos locales. La elección de este método se debate entre RANSAC y Registro Global Rapido (FGR) introducido en~\cite{zhou2016fast}. La solución de registro global basada en RANSAC puede llevar mucho tiempo debido a las innumerables propuestas y evaluaciones de modelos. En~\cite{zhou2016fast} se introdujo un enfoque más rápido que optimiza rápidamente los pesos de proceso de línea de pocas correspondencias. Como no hay una propuesta de modelo ni una evaluación para cada iteración, el enfoque propuesto en~\cite{zhou2016fast} puede ahorrar mucho tiempo computacional. Con la configuración apropiada, la exactitud de FGR es incluso comparable a ICP, se pueden observar mas resultados en~\cite{zhou2016fast}.
 
+\subsection{Integración de la escena}
+
+El proceso de integración es bastante sencillo cuando ya están las posiciones estimadas y los fragmentos registrados, para esta fase no se usó ningún parámetro extra. A continuación se presenta una tabla con un resumen de los parámetros escogidos.
+
+
+\begin{table}[ht]
+	\centering
+	\begin{tabular}{lp{2.5cm}cp{4cm}}
+		\hhline{====}
+		Parámetro & Valores admitidos & Valores seleccionados & Descripción\\
+		\hhline{====}
+		\verb|n_frames_per_fragment| & entero (\verb|int|) & 20 & Cantidad de \textit{frames} por fragmento\\ \hline
+		\verb|max_depth| & decimal en metros & 0.85 & Distancia máxima a capturar\\ \hline
+		\verb|max_depth_diff| & decimal en metros & 0.03 & Máxima diferencia de profundidad para considerar los píxeles alineados en el cálculo de odometría\\ \hline
+		\verb|voxel_size| & decimal en metros & 0.01 & Tamaño del voxel en el registro de fragmentos \\ \hline
+		\verb|icp_method| & \verb|point_to_point|, \verb|point_to_plane|, \verb|color| & \verb|color| & Algoritmo de registro local o ICP\\ \hline
+		\verb|global_registration| & \verb|ransac|, \verb|fgr| & \verb|fgr| & Algoritmo de registro global \\ \hline
+	\end{tabular}
+	\caption{Resumen del error cometido en las mediciones}
+	\label{tab:params}
+\end{table}
+
 \section{Resultados de los experimentos relativos a la medición de las UPD}
 
 En la etapa de medición de las úlceras de pie diabético era necesario evaluar la precisión de las mediciones a través de los modelos tridimensionales obtenidos con las cámaras de profundidad y el proceso de reconstrucción. 
