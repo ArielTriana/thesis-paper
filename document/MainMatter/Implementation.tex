@@ -10,7 +10,7 @@ Como seguimiento al trabajo~\cite{ching2022segm3d} se construyó un conjunto de 
 
 En la captura de los datos era imprescindible obtener información relativa a la evolución de la UPD a lo largo del tiempo, por tal razón, se tomaron muestras de la misma úlcera con períodos de separación de mínimo una semana. Además, se obtuvieron datos relativos al paciente como nombre, edad, sexo, color de la piel, tipo de diabetes, tipo de úlcera, localización de la úlcera, así como la muestra de vídeo en RGB-D y el modelo 3D extraído con la cámara y el Intel\textregistered~RealSense\texttrademark~Viewer incluido en el SDK 2.0. Toda esta información se publica en el conjunto de datos a excepción del nombre del paciente, en su lugar se adjunta un código identificador compuesto por las iniciales del nombre, la edad y el sexo, por ejemplo: sea el paciente Susanny Vega Cintra de edad 25 años y sexo femenino, entonces su código de identificación es SVC-25-F.
 
-El conjunto de datos está compuesto por 32 pacientes con edad promedio de 63 años; de estos pacientes, 23 de ellos son de sexo masculino y 9 de sexo femenino. Los colores de piel de los pacientes tenidos en cuenta tienen la siguiente distribución: 20 pacientes de piel blanca, 6 de piel negra, 5 de piel mestiza y 1 de piel amarilla. Los pacientes en su mayoría son diabéticos de tipo II, con una representación de 29 individuos, 2 diabéticos de tipo I, y 1 paciente que no era diabético. Se tomaron 65 muestras de úlceras de los 32 pacientes. Las úlceras estudiadas en su mayoría son úlceras de pie diabético de tipo neuro-infeccioso. La distribución del tipo de úlceras es: 20 úlceras neuro-infecciosas, 8 isquémicas, 3 flebolinfáticas y 1 lesión combinada. Las úlceras tienen mayor presencia en el pie izquierdo con un total de 22 y 10 en el pie derecho, donde las zonas con mayor afectación son los dedos, el dorsal del pie y la planta del mismo (Figura \ref{fig:loc}).
+El conjunto de datos está compuesto por 32 pacientes con edad promedio de 63 años; de estos pacientes, 23 son de sexo masculino y 9 de sexo femenino. Los colores de piel de los pacientes tienen la siguiente distribución: 20 pacientes de piel blanca, 6 de piel negra, 5 de piel mestiza y 1 de piel amarilla. Los pacientes en su mayoría son diabéticos de tipo II, con una representación de 29 individuos, 2 diabéticos de tipo I y 1 paciente que no era diabético. Se tomaron 65 muestras de úlceras de los 32 pacientes. Las úlceras estudiadas en su mayoría son úlceras de pie diabético de tipo neuro-infeccioso. La distribución del tipo de úlceras es: 20 úlceras neuro-infecciosas, 8 isquémicas, 3 flebolinfáticas y 1 lesión combinada. Las úlceras tienen mayor presencia en el pie izquierdo con un total de 22 y 10 en el pie derecho, donde las zonas con mayor afectación son los dedos, el dorsal del pie y la planta del mismo (Figura \ref{fig:loc}).
 
 \begin{figure}[ht]
 	\centering
@@ -19,7 +19,7 @@ El conjunto de datos está compuesto por 32 pacientes con edad promedio de 63 a�
 	\label{fig:loc}
 \end{figure}
 
-Para la experimentación con la segmentación y la reconstrucción se tomaron 20 UPD del conjunto de datos anterior de 9 pacientes, y se extrajo un conjunto de imágenes RGB y de profundidad de las secuencias de vídeo. La extracción consistió en extraer uno de cada diez \textit{frames} del vídeo, por tal razón, se obtuvieron un total de 420 imágenes RGB y de profundidad. Todas las imágenes RGB no poseían la calidad necesaria para la experimentación, por tal razón, se hizo una eliminación manual utilizando como criterios de calidad los siguientes:
+Para la experimentación con la segmentación y la reconstrucción se tomaron 20 UPD del conjunto de datos anterior de 9 pacientes y se extrajo un conjunto de imágenes RGB y de profundidad de las secuencias de vídeo. La extracción consistió en extraer uno de cada diez \textit{frames} del vídeo, por tal razón, se obtuvieron un total de 420 imágenes RGB y de profundidad. Todas las imágenes RGB no poseían la calidad necesaria para la experimentación, por tal razón, se hizo una eliminación manual utilizando como criterios de calidad los siguientes:
 \begin{itemize}
 	\item Ausencia de ruido por movimiento o \textit{motion blur},
 	\item Iluminación adecuada en la zona de ulcerosa, en este caso, se utilizó como medición de la iluminación la perspectiva visual de quien realizó la eliminación, 
@@ -89,7 +89,7 @@ Para evitar estos problemas se decidió utilizar un enfoque asistido de segmenta
 		F1-Score medio & 88.29 \% \\ \hline
 		Precisión media& 88.04 \% \\
 		\hline
-		Recobrado medio & 91.54 \\
+		Recobrado medio & 91.54 \% \\
 		\hline
 	\end{tabular}
 	\caption{Métricas de evaluación de la segmentación en el conjunto de datos obtenidos en el INACV}
@@ -122,7 +122,7 @@ Para finalmente generar el volúmen TSDF del fragmento, se necesita precisión, 
 
 \subsection{Registro y refinamiento de fragmentos}
 
-Para preprocesar los fragmentos como nubes de puntos se reduce la muestra a un nuevo tamaño de vóxel, se llama a este parámetro como \verb|voxel_size|. Aquí nuevamente se busca precisión, por lo que se intenta no reducir la muestra y asignar el valor real de 1mm, y este será el valor usado para todos los procesos posteriores.
+Para preprocesar los fragmentos como nubes de puntos se reduce la muestra a un nuevo tamaño de vóxel, se llama a este parámetro como \verb|voxel_size|. Aquí nuevamente se busca precisión, por lo que se intenta no reducir la muestra y asignar el valor real de 1mm y este será el valor usado para todos los procesos posteriores.
 
 En \textit{Open3D} se tienen dos procedimientos disponibles para el registro ICP: \textit{punto a punto}~\cite{besl1992method}  y \textit{punto a plano}~\cite{chen1992object}. En~\cite{rusinkiewicz2001efficient} se muestra que el algoritmo \textit{punto a plano} para ICP converge con mayor rapidez que \textit{punto a punto}. Recientemente, en~\cite{park2017colored} se introduce una variante para ICP, que usa tanto las características geométricas como el color para el registro, la información de color cierra la alineación a lo largo del plano tangente. Por lo tanto, este algoritmo es más preciso y más robusto que los algoritmos de registro de nubes de puntos anteriores, mientras que la velocidad de ejecución es comparable a la del registro ICP. Luego el parámetro \verb|icp_method| apuntará al último algoritmo descrito.
 
